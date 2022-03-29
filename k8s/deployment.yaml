@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodejs
+  labels:
+    app: nodejs
+spec:
+  containers:
+  - name: nodejs
+    image: oteizaa/nodejs:v1
+    env:
+    - name: MONGO_USERNAME
+      value: "sammy"
+    - name: MONGO_PASSWORD
+      value: "your_password"
+    - name: MONGO_HOSTNAME
+      value: "db"
+    - name: MONGO_PORT
+      value: "27017"
+    - name: MONGO_DB
+      value: "sharkinfo"
+    volumeMounts:
+    - name: node-storage
+      mountPath: /home/node/app
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 8080
+  volumes:
+    - name: node-storage
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mongo
+  labels:
+    app: mongo
+spec:
+  containers:
+  - name: mongo
+    image: mongo:4.1.8-xenial
+    env:
+    - name: MONGO_INITDB_ROOT_USERNAME
+      value: "sammy"
+    - name: MONGO_INITDB_ROOT_PASSWORD
+      value: "your_password"
+    volumeMounts:
+    - name: mongo-storage
+      mountPath: /data/db
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 27017
+  volumes:
+    - name: mongo-storage    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs
+  namespace: nodejs
+spec:
+  selector:
+    app: nodejs
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: NodePort
